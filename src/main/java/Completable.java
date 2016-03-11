@@ -1,7 +1,7 @@
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class Completable implements Consumable<Void, CompletableObserver> {
+public class Completable implements Consumable<CompletableObserver> {
 
     private final CompletableOnSubscribe onSubscribe;
 
@@ -14,7 +14,7 @@ public class Completable implements Consumable<Void, CompletableObserver> {
     }
 
     @Override
-    public <R, S2, X extends Consumable<R, S2>> X extend(Function<Consumer<CompletableObserver>, X> f) {
+    public <S2, X extends Consumable<S2>> X extend(Function<Consumer<CompletableObserver>, X> f) {
         return f.apply(onSubscribe);
     }
 

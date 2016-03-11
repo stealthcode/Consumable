@@ -2,7 +2,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class Flowable<T> implements Consumable<T, Subscriber<? super T>> {
+public class Flowable<T> implements Consumable<Subscriber<? super T>> {
     
     private final FlowableOnSubscribe<T> onSubscribe;
 
@@ -26,7 +26,7 @@ public class Flowable<T> implements Consumable<T, Subscriber<? super T>> {
     }
 
     @Override
-    public <R, S2, X extends Consumable<R, S2>> X extend(Function<Consumer<Subscriber<? super T>>, X> convertion) {
+    public <S2, X extends Consumable<S2>> X extend(Function<Consumer<Subscriber<? super T>>, X> convertion) {
         return convertion.apply(onSubscribe);
     }
 
@@ -46,14 +46,14 @@ public class Flowable<T> implements Consumable<T, Subscriber<? super T>> {
 
     /**
      * FlatMap takes a function from each value of type T emitted by this Flowable to a
-     * {@link Consumable} of type R that supports subscriptions by {@link Subscriber} and returns a
+     * {@link Consumable} that supports subscriptions by {@link Subscriber} and returns a
      * Flowable that serialized all values from each returned Consumable.
      * 
      * @param f
      *            a function from {@code T} to a {@code Consumable<R, Subscriber<? super R>>}
      * @return a Flowable that emits transformed all values from all inner flowables.
      */
-    public <R> Flowable<R> flatMap(Function<? super T, ? extends Consumable<R, Subscriber<? super R>>> f) {
+    public <R> Flowable<R> flatMap(Function<? super T, ? extends Consumable<Subscriber<? super R>>> f) {
         return merge(map(f));
     }
 
@@ -144,13 +144,13 @@ public class Flowable<T> implements Consumable<T, Subscriber<? super T>> {
      * @param others
      * @return
      */
-    public static <T, I extends Consumable<T, Subscriber<? super T>>> Flowable<T> merge(Consumable<? super I, Subscriber<? super I>> others) {
+    public static <T, I extends Consumable<Subscriber<? super T>>> Flowable<T> merge(Consumable<Subscriber<? super I>> others) {
         return others.extend(onSubscribe -> new Flowable<T>(new FlowableOnSubscribe<T>(){
             @Override
             public void accept(Subscriber<? super T> subscriber) {
-                onSubscribe.accept(new Subscriber<Consumable<T, Subscriber<? super T>>>() {
+                onSubscribe.accept(new Subscriber<Consumable<Subscriber<? super T>>>() {
                     @Override
-                    public void onNext(Consumable<T, Subscriber<? super T>> inner) {
+                    public void onNext(Consumable<Subscriber<? super T>> inner) {
                         inner.subscribe(new Subscriber<T>() {
                             @Override
                             public void onNext(T t) {

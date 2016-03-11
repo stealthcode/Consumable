@@ -1,7 +1,7 @@
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class Single<T> implements Consumable<T, SingleObserver<? super T>> {
+public class Single<T> implements Consumable<SingleObserver<? super T>> {
 
     private SingleOnSubscribe<T> onSubscribe;
 
@@ -15,7 +15,7 @@ public class Single<T> implements Consumable<T, SingleObserver<? super T>> {
     }
 
     @Override
-    public <R, S2, X extends Consumable<R, S2>> X extend(Function<Consumer<SingleObserver<? super T>>, X> f) {
+    public <S2, X extends Consumable<S2>> X extend(Function<Consumer<SingleObserver<? super T>>, X> f) {
         return f.apply(onSubscribe);
     }
     

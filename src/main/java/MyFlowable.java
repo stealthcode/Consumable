@@ -1,7 +1,7 @@
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class MyFlowable<T> implements Consumable<T, Subscriber<? super T>> {
+public class MyFlowable<T> implements Consumable<Subscriber<? super T>> {
 
     private final MyOnSubscribe<T> onSubscribe;
 
@@ -29,7 +29,7 @@ public class MyFlowable<T> implements Consumable<T, Subscriber<? super T>> {
     }
 
     @Override
-    public <R, S2, X extends Consumable<R, S2>> X extend(Function<Consumer<Subscriber<? super T>>, X> f) {
+    public <S2, X extends Consumable<S2>> X extend(Function<Consumer<Subscriber<? super T>>, X> f) {
         return null;
     }
         
@@ -41,7 +41,7 @@ public class MyFlowable<T> implements Consumable<T, Subscriber<? super T>> {
         return lift(new OperatorMap<T, R>(f));
     }
     
-    public <R> MyFlowable<R> flatMap(Function<? super T, ? extends Consumable<R, Subscriber<? super R>>> f) {
+    public <R> MyFlowable<R> flatMap(Function<? super T, ? extends Consumable<Subscriber<? super R>>> f) {
         return Flowable.merge(map(f)).extend(MyFlowable::fromFlowable);
     }
     

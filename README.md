@@ -29,12 +29,10 @@ I propose that the goal of an Observable interface simply be to facilitate subsc
 ```java
 /**
  *
- * @param <T>
- *            the type of items emitted
  * @param <O>
  *            the type of observer that this consumable can accept
  */
-public interface Consumable<T, O> {
+public interface Consumable<O> {
     /**
      * @param observer
      */
@@ -44,18 +42,16 @@ public interface Consumable<T, O> {
      * This is a fluent {@link Consumable#subscribe(Object) subscribe} which must return a
      * {@code Consumable}. The result may be a consumable of any type and any observer type.
      * 
-     * @param <R>
-     *            the contents of the resultant consumable
      * @param <O2>
      *            the type of observer of the resultant consumable
      * @param <X>
      *            the consumable returned by {@code f}
      * @param f
      *            a function that receives this consumable's onSubscribe which takes an observer
-     *            type {@code S} and returns another consumable
+     *            type {@code O} and returns another consumable
      * @return the consumable returned by {@code f}
      */
-    <R, O2, X extends Consumable<R, O2>> X extend(Function<Consumer<O>, X> f);
+    <O2, X extends Consumable<O2>> X extend(Function<Consumer<O>, X> f);
 }
 ```
 
@@ -66,18 +62,18 @@ The intent of this interface is to facilitate getting to the underlying onSubscr
 Operations that need an `Observable<Observable<T>>` or `Flowable<Flowable<T>>` can be written in such a way that the type of the outer shell (the operator menu that is the `rx.Observable`) should not impede interop. To this end, I propose that the type of `Observer` used in the underlying (potentially custom) observable/flowable be referenced as a first class. Here is an example of the merge API in the Flowable implementation. 
 
 ```java
-public static <T, I extends Consumable<T, Subscriber<? super T>>> Flowable<T> merge(Consumable<? super I, Subscriber<? super I>> others);
+public static <T, I extends Consumable<Subscriber<? super T>>> Flowable<T> merge(Consumable<Subscriber<? super I>> others);
 
 /**
  * FlatMap takes a function from each value of type T emitted by this Flowable to a
- * {@link Consumable} of type R that supports subscriptions by {@link Subscriber} and returns a
+ * {@link Consumable} that supports subscriptions by {@link Subscriber} and returns a
  * Flowable that serialized all values from each returned Consumable.
  * 
  * @param f
- *            a function from {@code T} to a {@code Consumable<R, Subscriber<? super R>>}
+ *            a function from {@code T} to a {@code Consumable<Subscriber<? super R>>}
  * @return a Flowable that emits transformed all values from all inner flowables.
  */
-public <R> Flowable<R> flatMap(Function<? super T, ? extends Consumable<R, Subscriber<? super R>>> f) {
+public <R> Flowable<R> flatMap(Function<? super T, ? extends Consumable<Subscriber<? super R>>> f) {
     return merge(map(f));
 }
 ```
@@ -85,7 +81,7 @@ public <R> Flowable<R> flatMap(Function<? super T, ? extends Consumable<R, Subsc
 As I am sure you can see, the generic type signature of a heterogeneous merge is made more complicated by referencing the `Subscriber`. However the benefit here can be seen when a custom Flowable implements a generic `flatMap`. 
 
 ```java
-public <R> MyFlowable<R> flatMap(Function<? super T, ? extends Consumable<R, Subscriber<R>>> f) {
+public <R> MyFlowable<R> flatMap(Function<? super T, ? extends Consumable<Subscriber<R>>> f) {
     return Flowable.merge(map(f)).extend(MyFlowable::fromFlowable);
 }
 ```
