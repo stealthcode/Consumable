@@ -4,7 +4,7 @@ This is a prototype to show that Operators can be reused for various implementat
 
 ## Motivation
 
-Library authors who expose an observable, completable, single, or flowable object sometimes need to constrain or extend the available operators. For instance, in some streaming apis there is a need to not allow any `filter` type operations or a flatMap that returns an `empty()`. Other cases might include "namespacing" custom operators into an Observable/Flowable custom implementation that adds or removes operators as necessary.
+Library authors who expose an observable, completable, single, or flowable object sometimes need to constrain or extend the available operators. For instance, in some streaming apis there is a need to not allow any `filter` type operations or a flatMap that returns an `empty()`. Other cases might include "namespacing" custom operators into an Observable/Flowable custom implementation that adds or removes operators as necessary. Also some operators (`groupBy`) must return a specialized type of an `Observable`/`Flowable` (the `GroupedObservable`) which must extend Observable in order to interop with other Observable sources and thus must include all methods/operators on the `Observable`. This change would allow for operators to be written that constrain or extend the operators available to the user.    
 
 ## Summary
 
