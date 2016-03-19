@@ -112,3 +112,17 @@ public <R> MyFlowable<R> lift(Function<Subscriber<? super R>, Subscriber<? super
     return new MyFlowable<R>(subscriber -> onSubscribe.accept(operator.apply(subscriber)));
 }
 ```
+
+## Cons
+
+The clearest draw back is the impact to the type signatures. The argument to the frequently used `Flowable.flatMap()` method would change from a function returning a `Flowable<T>` to a function that returns a more generic type of `Consumable<Subscriber<T>>`. That is to say, a thing that can be subscribed to with back-pressure semantics of the `Subscriber`. This would require that users understood that a `Flowable` implements a `Consumable<Subsciber>` when they use `flatMap()`.    
+
+## Pros
+
+In RxJava v1.1.2 the only option for producing a streamable source of data that interops with operators like `merge` or `concat` is to extend  `Observable`. With this change the operators would be generic enough to accept any implementation which still functions on the same underlying semantics of subscription. 
+
+This also means that any class that implements `Consumable<Subscriber<T>>` could use a Flowable Operator class because it is a function that adapts a `Subscriber` to chain together operations. So provided that the custom observable implements a protected method to instantiate the class the lift could be abstracted into a static class and all conventional `Subscriber -> Subscriber` operators could be reused.
+
+Additionally when a custom streamable source is implemented, the author could chose exactly which operators to include or to exclude. This is not possible with current classes that extend `Observable`. A custom Observable/Flowable for instance could be implemented with only a subset of operators. This could be useful in preventing operator combinations that would otherwise lead to incorrect or non-performant code. 
+
+Lastly, library authors in Java often times constrain the valid inputs by what types the api accepts. With this a user could implement a streaming source using standard operators and subscription semantics and require their usage in their apis. For instance, if the argument to a method call only takes a custom observable type `AcmeStreamingObservable` and the only way to publicly create such an observable is to use the library to create one, then the library author could rely on functionality built in and potentially state carried with the `AcmeStreamingObservable` with the knowledge that the user is unable to change the state, as any valid program that a user writes would not be able to create a valid instance of the observable (baring a clearly illegal usage of `Objenesis` which would likely result in an unusable class).
