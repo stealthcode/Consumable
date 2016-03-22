@@ -1,5 +1,8 @@
+package io.reactivex.single;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import io.reactivex.consumable.Consumable;
 
 public class Single<T> implements Consumable<SingleObserver<? super T>> {
 
