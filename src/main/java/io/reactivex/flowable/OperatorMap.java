@@ -1,4 +1,8 @@
+package io.reactivex.flowable;
 import java.util.function.Function;
+
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 public class OperatorMap<T, R> implements Function<Subscriber<? super R>, Subscriber<? super T>> {
 
@@ -9,7 +13,7 @@ public class OperatorMap<T, R> implements Function<Subscriber<? super R>, Subscr
         }
         
         @Override
-        public Subscriber<? super T> apply(Subscriber<? super R> subscriber) {
+        public Subscriber<? super T> apply(final Subscriber<? super R> subscriber) {
             return new Subscriber<T>(){
 
                 @Override

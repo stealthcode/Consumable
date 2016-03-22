@@ -1,5 +1,14 @@
+package io.reactivex.observable;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
+import io.reactivex.completable.CompletableObserver;
+import io.reactivex.consumable.Consumable;
+import io.reactivex.nonbp.Disposable;
+import io.reactivex.single.SingleObserver;
 
 public class Observable<T> implements Consumable<Observer<? super T>> {
 
@@ -9,7 +18,7 @@ public class Observable<T> implements Consumable<Observer<? super T>> {
         this.onSubscribe = onSubscribe;
     }
     
-    public static <T> Observable<T> just(T t) {
+    public static <T> Observable<T> just(final T t) {
         return new Observable<T>(new ObservableOnSubscribe<T>(){
 
             @Override
@@ -19,7 +28,7 @@ public class Observable<T> implements Consumable<Observer<? super T>> {
             }});
     }
     
-    public <R> Observable<R> lift(Function<Observer<? super R>, Observer<? super T>> operator) {
+    public <R> Observable<R> lift(final Function<Observer<? super R>, Observer<? super T>> operator) {
         return new Observable<R>(new ObservableOnSubscribe<R>() {
             @Override
             public void accept(Observer<? super R> observer) {
@@ -37,10 +46,10 @@ public class Observable<T> implements Consumable<Observer<? super T>> {
         onSubscribe.accept(subscriber);
     }
     
-    public static <T> Observable<T> fromSingle(Consumer<SingleObserver<? super T>> onSubscribe) {
+    public static <T> Observable<T> fromSingle(final Consumer<SingleObserver<? super T>> onSubscribe) {
         return new Observable<T>(new ObservableOnSubscribe<T>() {
             @Override
-            public void accept(Observer<? super T> observer) {
+            public void accept(final Observer<? super T> observer) {
                 onSubscribe.accept(new SingleObserver<T>() {
                     @Override
                     public void onSuccess(T t) {
@@ -60,10 +69,10 @@ public class Observable<T> implements Consumable<Observer<? super T>> {
             }});
     }
     
-    public static <T> Observable<T> fromCompletable(Consumer<CompletableObserver> onSubscribe) {
+    public static <T> Observable<T> fromCompletable(final Consumer<CompletableObserver> onSubscribe) {
         return new Observable<T>(new ObservableOnSubscribe<T>() {
             @Override
-            public void accept(Observer<? super T> observer) {
+            public void accept(final Observer<? super T> observer) {
                 onSubscribe.accept(new CompletableObserver() {
                     @Override
                     public void onComplete() {
@@ -82,10 +91,10 @@ public class Observable<T> implements Consumable<Observer<? super T>> {
             }});
     }
     
-    public static <T> Observable<T> fromFlowable(Consumer<Subscriber<T>> onSubscribe) {
+    public static <T> Observable<T> fromFlowable(final Consumer<Subscriber<T>> onSubscribe) {
         return new Observable<T>(new ObservableOnSubscribe<T>() {
             @Override
-            public void accept(Observer<? super T> observer) {
+            public void accept(final Observer<? super T> observer) {
                 onSubscribe.accept(new Subscriber<T>() {
                     @Override
                     public void onNext(T t) {
@@ -98,8 +107,13 @@ public class Observable<T> implements Consumable<Observer<? super T>> {
                     }
 
                     @Override
-                    public void onSubscribe(Subscription subscription) {
-                        observer.onSubscribe(subscription::cancel);
+                    public void onSubscribe(final Subscription subscription) {
+                        observer.onSubscribe(new Disposable() {
+                            @Override
+                            public void dispose() {
+                                subscription.cancel();
+                            }
+                        });
                     }
 
                     @Override

@@ -1,3 +1,6 @@
+package io.reactivex.single;
+import io.reactivex.nonbp.Disposable;
+
 public interface SingleObserver<T> {
 
     void onSuccess(T t);

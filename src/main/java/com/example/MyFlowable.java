@@ -1,5 +1,12 @@
+package com.example;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import org.reactivestreams.Subscriber;
+
+import io.reactivex.consumable.Consumable;
+import io.reactivex.flowable.Flowable;
+import io.reactivex.flowable.OperatorMap;
 
 public class MyFlowable<T> implements Consumable<Subscriber<? super T>> {
 
@@ -13,7 +20,7 @@ public class MyFlowable<T> implements Consumable<Subscriber<? super T>> {
         this.onSubscribe = onSubscribe;
     }
     
-    public static <T> MyFlowable<T> just(T t) {
+    public static <T> MyFlowable<T> just(final T t) {
         return new MyFlowable<T>(new MyOnSubscribe<T>(){
 
             @Override
@@ -33,8 +40,13 @@ public class MyFlowable<T> implements Consumable<Subscriber<? super T>> {
         return null;
     }
         
-    public <R> MyFlowable<R> lift(Function<Subscriber<? super R>, Subscriber<? super T>> operator) {
-        return new MyFlowable<R>(subscriber -> onSubscribe.accept(operator.apply(subscriber)));
+    public <R> MyFlowable<R> lift(final Function<Subscriber<? super R>, Subscriber<? super T>> operator) {
+        return new MyFlowable<R>(new MyOnSubscribe<R>() {
+            @Override
+            public void accept(Subscriber<? super R> subscriber) {
+                onSubscribe.accept(operator.apply(subscriber));
+            }
+        });
     }
     
     public <R> MyFlowable<R> map(Function<? super T, ? extends R> f) {
@@ -42,10 +54,15 @@ public class MyFlowable<T> implements Consumable<Subscriber<? super T>> {
     }
     
     public <R> MyFlowable<R> flatMap(Function<? super T, ? extends Consumable<Subscriber<? super R>>> f) {
-        return Flowable.merge(map(f)).extend(MyFlowable::fromFlowable);
+        return Flowable.merge(map(f)).extend(new Function<Consumer<Subscriber<? super R>>, MyFlowable<R>>() {
+
+            @Override
+            public MyFlowable<R> apply(Consumer<Subscriber<? super R>> t) {
+                return MyFlowable.fromFlowable(t);
+            }});
     }
     
-    public static <T> MyFlowable<T> fromFlowable(Consumer<Subscriber<? super T>> onSubscribe) {
+    public static <T> MyFlowable<T> fromFlowable(final Consumer<Subscriber<? super T>> onSubscribe) {
         return new MyFlowable<T>(new MyOnSubscribe<T>() {
             @Override
             public void accept(Subscriber<? super T> subscriber) {

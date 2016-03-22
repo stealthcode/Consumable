@@ -1,5 +1,8 @@
+package io.reactivex.completable;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import io.reactivex.consumable.Consumable;
 
 public class Completable implements Consumable<CompletableObserver> {
 

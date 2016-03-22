@@ -1,8 +1,19 @@
+package io.reactivex.flowable;
+
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class Flowable<T> implements Consumable<Subscriber<? super T>> {
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
+import io.reactivex.consumable.Consumable;
+import io.reactivex.nonbp.Disposable;
+import io.reactivex.observable.Observer;
+import io.reactivex.single.SingleObserver;
+
+public class Flowable<T> implements Consumable<Subscriber<? super T>>, Publisher<T> {
     
     private final FlowableOnSubscribe<T> onSubscribe;
 
@@ -10,7 +21,7 @@ public class Flowable<T> implements Consumable<Subscriber<? super T>> {
         this.onSubscribe = onSubscribe;
     }
     
-    public static <T> Flowable<T> just(T t) {
+    public static <T> Flowable<T> just(final T t) {
         return new Flowable<T>(new FlowableOnSubscribe<T>(){
 
             @Override
@@ -30,7 +41,7 @@ public class Flowable<T> implements Consumable<Subscriber<? super T>> {
         return convertion.apply(onSubscribe);
     }
 
-    public <R> Flowable<R> lift(Function<Subscriber<? super R>, Subscriber<? super T>> operator) {
+    public <R> Flowable<R> lift(final Function<Subscriber<? super R>, Subscriber<? super T>> operator) {
         return new Flowable<R>(new FlowableOnSubscribe<R>() {
             
             @Override
@@ -57,10 +68,10 @@ public class Flowable<T> implements Consumable<Subscriber<? super T>> {
         return merge(map(f));
     }
 
-    public static <T> Flowable<T> fromObservable(Consumer<? super Observer<T>> onSubscribe) {
+    public static <T> Flowable<T> fromObservable(final Consumer<? super Observer<T>> onSubscribe) {
         return new Flowable<T>(new FlowableOnSubscribe<T>() {
             @Override
-            public void accept(Subscriber<? super T> subscriber) {
+            public void accept(final Subscriber<? super T> subscriber) {
                 onSubscribe.accept(new Observer<T>() {
                     @Override
                     public void onNext(T t) {
@@ -79,7 +90,7 @@ public class Flowable<T> implements Consumable<Subscriber<? super T>> {
                     }
 
                     @Override
-                    public void onSubscribe(Disposable d) {
+                    public void onSubscribe(final Disposable d) {
                         subscriber.onSubscribe(new Subscription(){
                             @Override
                             public void cancel() {
@@ -96,10 +107,10 @@ public class Flowable<T> implements Consumable<Subscriber<? super T>> {
             }});
     }
 
-    public static <T> Flowable<T> fromSingle(Consumer<? super SingleObserver<T>> onSubscribe) {
+    public static <T> Flowable<T> fromSingle(final Consumer<? super SingleObserver<T>> onSubscribe) {
         return new Flowable<T>(new FlowableOnSubscribe<T>() {
             @Override
-            public void accept(Subscriber<? super T> subscriber) {
+            public void accept(final Subscriber<? super T> subscriber) {
                 onSubscribe.accept(new SingleObserver<T>() {
                     T singleValue;
                     final AtomicLong requested = new AtomicLong(0);
@@ -121,7 +132,7 @@ public class Flowable<T> implements Consumable<Subscriber<? super T>> {
                     }
 
                     @Override
-                    public void onSubscribe(Disposable d) {
+                    public void onSubscribe(final Disposable d) {
                         subscriber.onSubscribe(new Subscription(){
                             @Override
                             public void cancel() {
@@ -145,16 +156,32 @@ public class Flowable<T> implements Consumable<Subscriber<? super T>> {
      * @return
      */
     public static <T, I extends Consumable<Subscriber<? super T>>> Flowable<T> merge(Consumable<Subscriber<? super I>> others) {
-        return others.extend(onSubscribe -> new Flowable<T>(new FlowableOnSubscribe<T>(){
+        return others.extend(new Function<Consumer<Subscriber<? super I>>, Flowable<T>>() {
             @Override
-            public void accept(Subscriber<? super T> subscriber) {
-                onSubscribe.accept(new Subscriber<Consumable<Subscriber<? super T>>>() {
+            public Flowable<T> apply(final Consumer<Subscriber<? super I>> onSubscribe) {
+                return new Flowable<T>(new FlowableOnSubscribe<T>(){
                     @Override
-                    public void onNext(Consumable<Subscriber<? super T>> inner) {
-                        inner.subscribe(new Subscriber<T>() {
+                    public void accept(Subscriber<? super T> subscriber) {
+                        onSubscribe.accept(new Subscriber<Consumable<Subscriber<? super T>>>() {
                             @Override
-                            public void onNext(T t) {
-                                // here be dragons
+                            public void onNext(Consumable<Subscriber<? super T>> inner) {
+                                inner.subscribe(new Subscriber<T>() {
+                                    @Override
+                                    public void onNext(T t) {
+                                        // here be dragons
+                                    }
+
+                                    @Override
+                                    public void onError(Throwable t) {
+                                    }
+
+                                    @Override
+                                    public void onComplete() {
+                                    }
+
+                                    @Override
+                                    public void onSubscribe(Subscription subscription) {
+                                    }});;
                             }
 
                             @Override
@@ -167,21 +194,9 @@ public class Flowable<T> implements Consumable<Subscriber<? super T>> {
 
                             @Override
                             public void onSubscribe(Subscription subscription) {
-                            }});;
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                    }
-
-                    @Override
-                    public void onComplete() {
-                    }
-
-                    @Override
-                    public void onSubscribe(Subscription subscription) {
+                            }});
                     }});
-            }}));
+            }
+        });
     }
-    
 }
