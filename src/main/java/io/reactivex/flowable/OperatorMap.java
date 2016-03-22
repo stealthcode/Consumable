@@ -1,6 +1,9 @@
 package io.reactivex.flowable;
 import java.util.function.Function;
 
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
 public class OperatorMap<T, R> implements Function<Subscriber<? super R>, Subscriber<? super T>> {
 
         private final Function<? super T, ? extends R> f;

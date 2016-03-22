@@ -2,10 +2,11 @@ package io.reactivex.observable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
 import io.reactivex.completable.CompletableObserver;
 import io.reactivex.consumable.Consumable;
-import io.reactivex.flowable.Subscriber;
-import io.reactivex.flowable.Subscription;
 import io.reactivex.nonbp.Disposable;
 import io.reactivex.single.SingleObserver;
 

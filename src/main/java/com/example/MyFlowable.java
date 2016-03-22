@@ -2,10 +2,11 @@ package com.example;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.reactivestreams.Subscriber;
+
 import io.reactivex.consumable.Consumable;
 import io.reactivex.flowable.Flowable;
 import io.reactivex.flowable.OperatorMap;
-import io.reactivex.flowable.Subscriber;
 
 public class MyFlowable<T> implements Consumable<Subscriber<? super T>> {
 

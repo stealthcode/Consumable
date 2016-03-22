@@ -1,13 +1,13 @@
 package io.reactivex;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import com.example.MyFlowable;
 
 import io.reactivex.flowable.Flowable;
-import io.reactivex.flowable.Subscriber;
-import io.reactivex.flowable.Subscription;
 import io.reactivex.nonbp.Disposable;
 import io.reactivex.observable.Observable;
 import io.reactivex.observable.Observer;
