@@ -13,7 +13,7 @@ public class OperatorMap<T, R> implements Function<Subscriber<? super R>, Subscr
         }
         
         @Override
-        public Subscriber<? super T> apply(Subscriber<? super R> subscriber) {
+        public Subscriber<? super T> apply(final Subscriber<? super R> subscriber) {
             return new Subscriber<T>(){
 
                 @Override
